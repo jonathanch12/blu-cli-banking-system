@@ -34,7 +34,7 @@ func CreateAccount(name string, amount float64) error {
 	}
 
 	historyPath := filePathFor("history", name)
-	historyLine := fmt.Sprintf("%s,CREATE,%.2f\n", ts, amount)
+	historyLine := fmt.Sprintf("CREATE,%.2f,%s\n", amount, ts)
 	err2 := os.WriteFile(historyPath, []byte(historyLine), 0644)
 
 	if err2 != nil {
