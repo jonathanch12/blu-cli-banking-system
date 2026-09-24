@@ -129,7 +129,9 @@ func Transfer(sender string, receiver string, amount float64) error {
 		return fmt.Errorf("error opening sender history: %w", err)
 	}
 	defer fs.Close()
-	fs.WriteString(fmt.Sprintf("TRANSFER,%.2f,%s,%s\n", amount, receiver, ts))
+	if _, err := fmt.Fprintf(fs, "TRANSFER,%.2f,%s,%s\n", amount, receiver, ts); err != nil {
+		return fmt.Errorf("error writing sender history: %w", err)
+	}
 
 	receiverHist := filePathFor("history", receiver)
 	fr, err := os.OpenFile(receiverHist, os.O_APPEND|os.O_WRONLY, 0644)
@@ -137,7 +139,9 @@ func Transfer(sender string, receiver string, amount float64) error {
 		return fmt.Errorf("error opening receiver history: %w", err)
 	}
 	defer fr.Close()
-	fr.WriteString(fmt.Sprintf("RECEIVE,%.2f,%s,%s\n", amount, sender, ts))
+	if _, err := fmt.Fprintf(fr, "RECEIVE,%.2f,%s,%s\n", amount, sender, ts); err != nil {
+		return fmt.Errorf("error writing receiver history: %w", err)
+	}
 
 	return nil
 }

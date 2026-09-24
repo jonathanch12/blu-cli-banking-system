@@ -25,7 +25,7 @@ func main() {
 		amount, err := strconv.ParseFloat(os.Args[3], 64)
 
 		if err != nil {
-			fmt.Printf("Error detected: %v", err)
+			fmt.Printf("Error detected: %v\n", err)
 			os.Exit(1)
 		}
 
@@ -47,7 +47,7 @@ func main() {
 		amount, err := strconv.ParseFloat(os.Args[4], 64)
 
 		if err != nil {
-			fmt.Printf("Error detected: %v", err)
+			fmt.Printf("Error detected: %v\n", err)
 			os.Exit(1)
 		}
 
