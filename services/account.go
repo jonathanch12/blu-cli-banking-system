@@ -74,19 +74,70 @@ func Transfer(sender string, receiver string, amount float64) error {
 	}
 
 	if amount <= 0 {
-		return fmt.Errorf("amount cannot be less pthan zero, inputted amount: %.2f", amount)
+		return fmt.Errorf("amount cannot be less than zero, inputted amount: %.2f", amount)
 	}
 
 	senderBalance, err := readBalance(sender)
 	if err != nil {
-		return fmt.Errorf("error retrieving balance data for %q: %w", sender, err)
+		return err
 	}
 
 	if senderBalance < amount {
 		return fmt.Errorf("sender %q does not have sufficient amount to transfer", sender)
 	}
 
-	// Logic for updating account balance for sender and receiver
+	receiverBalance, err := readBalance(receiver)
+	if err != nil {
+		return err
+	}
+
+	newSenderBalance := senderBalance - amount
+	newReceiverBalance := receiverBalance + amount
+
+	senderData, err := os.ReadFile(senderPath)
+	if err != nil {
+		return fmt.Errorf("error reading sender's account: %w", err)
+	}
+	senderDataLines := strings.Split(strings.TrimSpace(string(senderData)), "\n")
+	senderLogLines := senderDataLines[1:]
+
+	receiverData, err := os.ReadFile(receiverPath)
+	if err != nil {
+		return fmt.Errorf("error reading receiver's account: %w", err)
+	}
+	receiverDataLines := strings.Split(strings.TrimSpace(string(receiverData)), "\n")
+	receiverLogLines := receiverDataLines[1:]
+
+	ts := time.Now().Format(time.RFC3339)
+
+	oldSenderLog := strings.Join(senderLogLines, "\n")
+	senderNewLog := fmt.Sprintf("%.2f\n%s\nTRANSFER,%.2f,%s,%s\n", newSenderBalance, oldSenderLog, amount, receiver, ts)
+
+	oldReceiverLog := strings.Join(receiverLogLines, "\n")
+	receiverNewLog := fmt.Sprintf("%.2f\n%s\nRECEIVE,%.2f,%s,%s\n", newReceiverBalance, oldReceiverLog, amount, sender, ts)
+
+	if err := os.WriteFile(senderPath, []byte(senderNewLog), 0644); err != nil {
+		return fmt.Errorf("error updating sender account: %w", err)
+	}
+	if err := os.WriteFile(receiverPath, []byte(receiverNewLog), 0644); err != nil {
+		return fmt.Errorf("error updating receiver account: %w", err)
+	}
+
+	senderHist := filePathFor("history", sender)
+	fs, err := os.OpenFile(senderHist, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("error opening sender history: %w", err)
+	}
+	defer fs.Close()
+	fs.WriteString(fmt.Sprintf("TRANSFER,%.2f,%s,%s\n", amount, receiver, ts))
+
+	receiverHist := filePathFor("history", receiver)
+	fr, err := os.OpenFile(receiverHist, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("error opening receiver history: %w", err)
+	}
+	defer fr.Close()
+	fr.WriteString(fmt.Sprintf("RECEIVE,%.2f,%s,%s\n", amount, sender, ts))
 
 	return nil
 }

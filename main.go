@@ -37,7 +37,27 @@ func main() {
 
 		fmt.Printf("Account creation for %s is successful.\n", name)
 	case "transfer":
+		if len(os.Args) < 5 {
+			fmt.Println("Missing arguments for performing transfer.")
+			os.Exit(1)
+		}
 
+		sender := os.Args[2]
+		receiver := os.Args[3]
+		amount, err := strconv.ParseFloat(os.Args[4], 64)
+
+		if err != nil {
+			fmt.Printf("Error detected: %v", err)
+			os.Exit(1)
+		}
+
+		transferError := services.Transfer(sender, receiver, amount)
+		if transferError != nil {
+			fmt.Fprintln(os.Stderr, transferError)
+			os.Exit(1)
+		}
+
+		fmt.Printf("%.2f is successfully transfered from %s to %s.\n", amount, sender, receiver)
 		//	case "add_deposit" :
 		//	case "accrue_interest":
 	default:
