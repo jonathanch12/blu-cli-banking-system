@@ -4,11 +4,30 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
 func filePathFor(kind, name string) string {
 	return filepath.Join("filebase", kind, name+".txt")
+}
+
+func readBalance(name string) (float64, error) {
+	path := filePathFor("accounts", name)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, fmt.Errorf("error reading account %q: %w", name, err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+
+	balance, err := strconv.ParseFloat(strings.TrimSpace(lines[0]), 64)
+	if err != nil {
+		return 0, fmt.Errorf("error parsing balance for %q: %w", name, err)
+	}
+
+	return balance, nil
 }
 
 func CreateAccount(name string, amount float64) error {
@@ -40,5 +59,34 @@ func CreateAccount(name string, amount float64) error {
 	if err2 != nil {
 		return fmt.Errorf("failed to save account creation log, error: %w", err2)
 	}
+	return nil
+}
+
+func Transfer(sender string, receiver string, amount float64) error {
+	senderPath := filePathFor("accounts", sender)
+	if _, err := os.Stat(senderPath); err != nil {
+		return fmt.Errorf("sender account %q not found", sender)
+	}
+
+	receiverPath := filePathFor("accounts", receiver)
+	if _, err := os.Stat(receiverPath); err != nil {
+		return fmt.Errorf("receiver account %q not found", receiver)
+	}
+
+	if amount <= 0 {
+		return fmt.Errorf("amount cannot be less pthan zero, inputted amount: %.2f", amount)
+	}
+
+	senderBalance, err := readBalance(sender)
+	if err != nil {
+		return fmt.Errorf("error retrieving balance data for %q: %w", sender, err)
+	}
+
+	if senderBalance < amount {
+		return fmt.Errorf("sender %q does not have sufficient amount to transfer", sender)
+	}
+
+	// Logic for updating account balance for sender and receiver
+
 	return nil
 }

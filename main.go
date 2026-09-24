@@ -36,7 +36,8 @@ func main() {
 		}
 
 		fmt.Printf("Account creation for %s is successful.\n", name)
-		//	case "transfer" :
+	case "transfer":
+
 		//	case "add_deposit" :
 		//	case "accrue_interest":
 	default:
