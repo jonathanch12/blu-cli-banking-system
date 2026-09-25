@@ -96,15 +96,12 @@ func AccrueInterest() error {
 
 		trimmed := strings.TrimSpace(string(data))
 		if trimmed == "" {
-			// No deposits for this user; nothing to accrue.
 			continue
 		}
 
 		lines := strings.Split(trimmed, "\n")
 		newLines := make([]string, 0, len(lines))
 
-		// Collect the history entries to append only after every line parses
-		// successfully, so a malformed line aborts before any file is touched.
 		type interestLog struct {
 			id     int
 			amount float64
@@ -135,7 +132,6 @@ func AccrueInterest() error {
 
 			minutes := int(now.Sub(lastTs).Minutes())
 			if minutes <= 0 {
-				// Younger than a minute (or clock skew): leave the line untouched.
 				newLines = append(newLines, line)
 				continue
 			}
@@ -147,13 +143,11 @@ func AccrueInterest() error {
 			logs = append(logs, interestLog{id: id, amount: newAmount, ts: newTs})
 		}
 
-		// Rewrite the deposit file with the recomputed lines.
 		newContent := strings.Join(newLines, "\n") + "\n"
 		if err := os.WriteFile(depositPath, []byte(newContent), 0644); err != nil {
 			return fmt.Errorf("error writing deposit file for %q: %w", name, err)
 		}
 
-		// Append INTEREST entries to history for the deposits that changed.
 		if len(logs) == 0 {
 			continue
 		}
