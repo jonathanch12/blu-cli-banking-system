@@ -3,15 +3,10 @@ package services
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 )
-
-func filePathFor(kind, name string) string {
-	return filepath.Join("filebase", kind, name+".txt")
-}
 
 func readBalance(name string) (float64, error) {
 	path := filePathFor("accounts", name)
@@ -38,7 +33,7 @@ func CreateAccount(name string, amount float64) error {
 
 	ts := time.Now().Format(time.RFC3339)
 
-	content := fmt.Sprintf("%.2f\nCREATE,%.2f,%s\n", amount, amount, ts)
+	content := fmt.Sprintf("%.2f\nCREATE|%.2f|%s\n", amount, amount, ts)
 	err := os.WriteFile(filePath, []byte(content), 0644)
 
 	if err != nil {
@@ -53,7 +48,7 @@ func CreateAccount(name string, amount float64) error {
 	}
 
 	historyPath := filePathFor("history", name)
-	historyLine := fmt.Sprintf("CREATE,%.2f,%s\n", amount, ts)
+	historyLine := fmt.Sprintf("CREATE|%.2f|%s\n", amount, ts)
 	err2 := os.WriteFile(historyPath, []byte(historyLine), 0644)
 
 	if err2 != nil {
@@ -111,10 +106,10 @@ func Transfer(sender string, receiver string, amount float64) error {
 	ts := time.Now().Format(time.RFC3339)
 
 	oldSenderLog := strings.Join(senderLogLines, "\n")
-	senderNewLog := fmt.Sprintf("%.2f\n%s\nTRANSFER,%.2f,%s,%s\n", newSenderBalance, oldSenderLog, amount, receiver, ts)
+	senderNewLog := fmt.Sprintf("%.2f\n%s\nTRANSFER|%.2f|%s|%s\n", newSenderBalance, oldSenderLog, amount, receiver, ts)
 
 	oldReceiverLog := strings.Join(receiverLogLines, "\n")
-	receiverNewLog := fmt.Sprintf("%.2f\n%s\nRECEIVE,%.2f,%s,%s\n", newReceiverBalance, oldReceiverLog, amount, sender, ts)
+	receiverNewLog := fmt.Sprintf("%.2f\n%s\nRECEIVE|%.2f|%s|%s\n", newReceiverBalance, oldReceiverLog, amount, sender, ts)
 
 	if err := os.WriteFile(senderPath, []byte(senderNewLog), 0644); err != nil {
 		return fmt.Errorf("error updating sender account: %w", err)
@@ -129,7 +124,7 @@ func Transfer(sender string, receiver string, amount float64) error {
 		return fmt.Errorf("error opening sender history: %w", err)
 	}
 	defer fs.Close()
-	if _, err := fmt.Fprintf(fs, "TRANSFER,%.2f,%s,%s\n", amount, receiver, ts); err != nil {
+	if _, err := fmt.Fprintf(fs, "TRANSFER|%.2f|%s|%s\n", amount, receiver, ts); err != nil {
 		return fmt.Errorf("error writing sender history: %w", err)
 	}
 
@@ -139,7 +134,7 @@ func Transfer(sender string, receiver string, amount float64) error {
 		return fmt.Errorf("error opening receiver history: %w", err)
 	}
 	defer fr.Close()
-	if _, err := fmt.Fprintf(fr, "RECEIVE,%.2f,%s,%s\n", amount, sender, ts); err != nil {
+	if _, err := fmt.Fprintf(fr, "RECEIVE|%.2f|%s|%s\n", amount, sender, ts); err != nil {
 		return fmt.Errorf("error writing receiver history: %w", err)
 	}
 

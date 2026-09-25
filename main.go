@@ -58,7 +58,27 @@ func main() {
 		}
 
 		fmt.Printf("%.2f is successfully transfered from %s to %s.\n", amount, sender, receiver)
-		//	case "add_deposit" :
+	case "add_deposit":
+		if len(os.Args) < 4 {
+			fmt.Println("Missing arguments for deposit creation.")
+			os.Exit(1)
+		}
+
+		user := os.Args[2]
+		amount, err := strconv.ParseFloat(os.Args[3], 64)
+
+		if err != nil {
+			fmt.Printf("Error detected: %v\n", err)
+			os.Exit(1)
+		}
+
+		depositError := services.AddDeposit(user, amount)
+		if depositError != nil {
+			fmt.Fprintln(os.Stderr, depositError)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Deposit with amount %.2f for %s is created successfully.\n", amount, user)
 		//	case "accrue_interest":
 	default:
 		fmt.Fprintln(os.Stderr, "Command not recognized.")
