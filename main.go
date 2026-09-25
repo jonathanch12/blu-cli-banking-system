@@ -79,7 +79,14 @@ func main() {
 		}
 
 		fmt.Printf("Deposit with amount %.2f for %s is created successfully.\n", amount, user)
-		//	case "accrue_interest":
+	case "accrue_interest":
+		accrueInterestError := services.AccrueInterest()
+		if accrueInterestError != nil {
+			fmt.Fprintln(os.Stderr, accrueInterestError)
+			os.Exit(1)
+		}
+		fmt.Println("All user's deposits have been accrued.")
+
 	default:
 		fmt.Fprintln(os.Stderr, "Command not recognized.")
 		os.Exit(1)
